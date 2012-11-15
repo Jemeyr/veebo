@@ -2,6 +2,7 @@
 #define NO_SDL_GLEXT
 
 #include <iostream>
+#include <fstream>
 
 #include "GL/glew.h"
 
@@ -15,7 +16,7 @@ const char* vertexSource =
 	"#version 150\n"
 	"in vec2 position;"
 	"void main() {"
-	"	gl_Position = vec4( position.y, position.x, 0.0, 1.0 );"
+	"	gl_Position =	 vec4( position.y, position.x, 0.0, 1.0 );"
 	"}";
 const char* fragmentSource =
 	"#version 150\n"
@@ -68,14 +69,71 @@ void processEvents() {
 	}
 }
 
+GLuint MakeShader(std::string file_name)
+{
+	GLenum shader_type;
+
+	//get the shader type from extension
+	std::string::size_type index;
+	index = file_name.rfind('.');
+
+	if(index != std::string::npos)
+	{
+		std::string extension = file_name.substr(index+1);
+		
+		//get enum from extension
+		if(!extension.compare("glslv"))
+		{
+			shader_type = GL_VERTEX_SHADER;
+		}
+		else if(!extension.compare("glslf"))
+		{
+			shader_type = GL_FRAGMENT_SHADER;
+		}
+		else
+		{
+			std::cout << "File extension \"" << extension << "\" is not valid" << std::endl;
+			return 0;
+		}
+		
+	}
+	else
+	{
+		std::cout << "No file extension" << std::endl;
+		return 0;
+	}
+	
+	
+	//read in file
+	std::string line,file;
+	std::ifstream in(file_name.c_str());
+	while(std::getline(in, line))
+	{
+ 		file += line + "\n";
+	}
+	const char* shader_source = file.c_str();
+	
+	
+	//compile shader and stuff
+	GLuint shader;
+	shader = glCreateShader(shader_type);
+	glShaderSource(shader, 1, &shader_source, NULL);
+	glCompileShader(shader); 
+	
+	checkCompileStatus(shader);
+	
+	
+	return shader;
+}
+
+	
  
 void mainLoop() {
 	
-	
-	
-	float vertices[] = { 0.0f,  0.5f,
-						 0.5f, -0.5f,
-						-0.5f, -0.5f }; 
+	float vertices[] = {	 0.0f,  0.5f,
+				 0.5f, -0.5f,
+				-0.5f, -0.5f }; 
+
 	//a vertex buffer object id
 	GLuint vbo;
 	glGenBuffers( 1, &vbo );		
@@ -84,30 +142,19 @@ void mainLoop() {
 	GLuint vao;
 	glGenVertexArrays( 1, &vao );
 	
+	//bind attr array
 	glBindVertexArray( vao );
 	
-
 
 	//bind it to array buffer
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
 	glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_STATIC_DRAW );
 	
 	
-	//shadorz
-	GLuint vertexShader = glCreateShader( GL_VERTEX_SHADER );
-	glShaderSource( vertexShader, 1, &vertexSource, NULL );
-	glCompileShader( vertexShader );
+	//make shaders
+	GLuint vertexShader = MakeShader("vertexShader.glslv");
+	GLuint fragmentShader = MakeShader("fragmentShader.glslf");
 	
-	GLuint fragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
-	glShaderSource( fragmentShader, 1, &fragmentSource, NULL );
-	glCompileShader( fragmentShader );
-		
-	
-	//complain about having out of date glsl
-	checkCompileStatus( vertexShader );
-	checkCompileStatus( fragmentShader );
-	
-
 	
 	//shader program
 	GLuint shaderProgram = glCreateProgram();
@@ -128,9 +175,16 @@ void mainLoop() {
 	glVertexAttribPointer( posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0 );
 	glEnableVertexAttribArray( posAttrib );
 	
+	//////////////////
 	
 	
 	
+	//color
+	GLuint uniColor = glGetUniformLocation(shaderProgram, "triColor" );
+	
+	glUniform3f( uniColor, 1.0, 0.0, 1.0 );
+	
+	//clear to dark green	
 	glClearColor( 0.0f, 0.25f, 0.0f, 1.0f );
 	
 	while(true) {
