@@ -8,6 +8,8 @@
 
 #include "SDL/SDL.h"
 
+#include "math.h"
+
 #define WIDTH	640
 #define HEIGHT	480
 
@@ -188,6 +190,9 @@ void mainLoop() {
 	glClearColor( 0.0f, 0.25f, 0.0f, 1.0f );
 	
 	while(true) {
+
+		float time = (float)clock() / (float)CLOCKS_PER_SEC;
+		glUniform3f( uniColor, ( sin( time * 4.0f ) + 1.0f ) / 2.0f, 0.0f, 0.0f );
 	
 		processEvents();
 	
