@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "GL/glew.h"
 
@@ -13,19 +14,7 @@
 #define WIDTH	640
 #define HEIGHT	480
 
-
-const char* vertexSource =
-	"#version 150\n"
-	"in vec2 position;"
-	"void main() {"
-	"	gl_Position =	 vec4( position.y, position.x, 0.0, 1.0 );"
-	"}";
-const char* fragmentSource =
-	"#version 150\n"
-	"out vec4 outColor;"
-	"void main() {"
-	"	outColor = vec4( gl_FragCoord.y/640, 0.0, 0.0, 1.0 );"
-	"}";
+			
 
 void endProgram(int code) {SDL_Quit();	exit(code);}
 
@@ -107,13 +96,13 @@ GLuint MakeShader(std::string file_name)
 	
 	
 	//read in file
-	std::string line,file;
+	std::string line;
 	std::ifstream in(file_name.c_str());
-	while(std::getline(in, line))
-	{
- 		file += line + "\n";
-	}
-	const char* shader_source = file.c_str();
+	std::stringstream file;
+	file << in.rdbuf();
+	
+	const std::string shader_string = file.str();
+	const char* shader_source = shader_string.c_str();
 	
 	
 	//compile shader and stuff
